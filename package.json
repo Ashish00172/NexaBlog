@@ -38,7 +38,7 @@
     "lowlight": "^3.3.0",
     "lucide-react": "^0.469.0",
     "next": "^15.5.9",
-    "next-auth": "5.0.0-beta.25",
+    "next-auth": "^5.0.0-beta.31",
     "next-cloudinary": "^6.16.0",
     "next-themes": "^0.4.4",
     "react": "^19.2.6",
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^22.10.1",
+    "@types/node": "^22.19.19",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
@@ -60,7 +60,11 @@
     "postcss": "^8.4.49",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.16",
+    "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.3"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
