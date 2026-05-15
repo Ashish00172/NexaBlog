@@ -10,6 +10,12 @@ const globalCache = globalThis as unknown as { dbHealthCache?: CacheShape };
 export async function canReachDatabase() {
   const now = Date.now();
   const cache = globalCache.dbHealthCache;
+  const databaseUrl = process.env.DATABASE_URL?.trim();
+
+  if (!databaseUrl) {
+    globalCache.dbHealthCache = { checkedAt: now, healthy: false };
+    return false;
+  }
 
   // Avoid hammering a down DB on every request.
   if (cache && now - cache.checkedAt < 10000) {
