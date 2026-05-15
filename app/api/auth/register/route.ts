@@ -24,13 +24,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email already registered" }, { status: 409 });
     }
 
-    const userRole = await prisma.role.findUnique({
-      where: { name: "USER" }
+    // Self-heal missing seed data in production by ensuring default USER role exists.
+    const userRole = await prisma.role.upsert({
+      where: { name: "USER" },
+      update: {},
+      create: {
+        name: "USER",
+        description: "Default role for content creators"
+      }
     });
-
-    if (!userRole) {
-      return NextResponse.json({ error: "Default role missing" }, { status: 500 });
-    }
 
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
 

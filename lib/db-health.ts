@@ -18,6 +18,21 @@ export async function canReachDatabase() {
 
   try {
     await prisma.$queryRaw`SELECT 1`;
+
+    // A live connection is not enough; ensure critical tables exist.
+    const tableCheck = await prisma.$queryRaw<Array<{ blog_table: string | null; category_table: string | null }>>`
+      SELECT
+        to_regclass('public."Blog"')::text AS blog_table,
+        to_regclass('public."Category"')::text AS category_table
+    `;
+    const hasBlog = tableCheck[0]?.blog_table === 'public."Blog"';
+    const hasCategory = tableCheck[0]?.category_table === 'public."Category"';
+    if (!hasBlog || !hasCategory) {
+      console.error("DB_SCHEMA_MISSING", { hasBlog, hasCategory });
+      globalCache.dbHealthCache = { checkedAt: now, healthy: false };
+      return false;
+    }
+
     globalCache.dbHealthCache = { checkedAt: now, healthy: true };
     return true;
   } catch (error) {
