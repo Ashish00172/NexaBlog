@@ -1,0 +1,10 @@
+PROFILE_HEAD_STATUS:HTTP/1.1 307 Temporary Redirect
+PROFILE_HEAD_LOCATION:location: /login?callbackUrl=%2Fprofile
+REGISTER_OK:qa_user_59803ee7@example.com
+LOGIN_HTTP:200
+SESSION_EMAIL_AFTER_LOGIN:qa_user_59803ee7@example.com
+SESSION_AFTER_LOGOUT:null
+RACE_STATUSES:201,500
+RACE_BODIES:{"user":{"id":"cmp5um6a60003l0xi72ruryh8","name":"Race User","email":"qa_race_3db99f1d@example.com"}} || {"error":"Unable to register user"}
+BAD_COOKIE_STATUS:HTTP/1.1 307 Temporary Redirect
+BAD_COOKIE_LOCATION:location: /login?callbackUrl=%2Fprofile
