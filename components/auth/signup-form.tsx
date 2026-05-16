@@ -3,7 +3,6 @@
 import type React from "react";
 import { useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +45,6 @@ export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, startTransition] = useTransition();
-  const router = useRouter();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,19 +67,19 @@ export function SignupForm() {
         const signInResult = await signIn("credentials", {
           email: normalizedEmail,
           password,
-          redirect: false
+          redirect: false,
+          redirectTo: "/"
         });
 
         // Registration should only be considered complete once session creation succeeds.
         if (!signInResult || signInResult.error) {
           toast.error("Account created, but login failed. Please login manually.");
-          router.push("/login");
+          window.location.assign("/login");
           return;
         }
 
         toast.success("Account created");
-        router.push(signInResult.url || "/");
-        router.refresh();
+        window.location.assign(signInResult.url || "/");
       } catch {
         toast.error("Network error. Please check your connection and try again.");
       }

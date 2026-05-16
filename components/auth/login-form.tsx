@@ -31,7 +31,7 @@ export function LoginForm() {
           email: email.trim().toLowerCase(),
           password,
           redirect: false,
-          callbackUrl
+          redirectTo: callbackUrl
         });
 
         if (!response) {
@@ -45,7 +45,7 @@ export function LoginForm() {
         }
 
         toast.success("Logged in successfully");
-        window.location.href = response.url || callbackUrl;
+        window.location.assign(response.url || callbackUrl);
       } catch {
         toast.error("Network error. Please check your connection and try again.");
       }

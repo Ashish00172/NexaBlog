@@ -1,8 +1,15 @@
+import { auth } from "@/auth";
 import { SignupForm } from "@/components/auth/signup-form";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const session = await auth();
+  if (session?.user) {
+    redirect("/");
+  }
+
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-md items-center px-4 py-10">
       <Card className="w-full p-6">

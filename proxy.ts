@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { hasRequiredRole, roles } from "@/lib/permissions";
 
-export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+export async function proxy(req: NextRequest) {
+  const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  const token = await getToken({ req, secret: authSecret });
   const isLoggedIn = Boolean(token);
   const role = typeof token?.role === "string" ? token.role : undefined;
   const pathname = req.nextUrl.pathname;
