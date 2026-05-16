@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { auth } from "@/auth";
 import { notFound } from "next/navigation";
+import { BlogOwnerActions } from "@/components/blog/blog-owner-actions";
 import { BlogContent } from "@/components/blog/blog-content";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { canEditBlog } from "@/lib/permissions";
 import { canReachDatabase } from "@/lib/db-health";
 import { prisma } from "@/lib/prisma";
 import { toEditorContent } from "@/lib/tiptap";
@@ -41,6 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BlogDetailPage({ params }: Props) {
+  const session = await auth();
   const dbReady = await canReachDatabase();
   if (!dbReady) {
     return (
@@ -56,7 +60,7 @@ export default async function BlogDetailPage({ params }: Props) {
   const { slug } = await params;
 
   const blog = await prisma.blog.findUnique({
-    where: { slug, status: "PUBLISHED" },
+    where: { slug },
     include: {
       author: { select: { name: true } },
       category: { select: { name: true, slug: true } },
@@ -70,11 +74,23 @@ export default async function BlogDetailPage({ params }: Props) {
     }
   });
 
-  if (!blog) return notFound();
+  const canManage =
+    !!session?.user && canEditBlog(session.user.id, blog?.authorId || "", session.user.role);
+
+  if (!blog || (blog.status !== "PUBLISHED" && !canManage)) return notFound();
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
       <header className="space-y-4">
+        {canManage ? (
+          <div className="flex justify-end">
+            <BlogOwnerActions
+              blogId={blog.id}
+              editHref={`/blog/edit/${blog.id}`}
+              redirectAfterDelete="/profile"
+            />
+          </div>
+        ) : null}
         <Badge>{blog.category.name}</Badge>
         <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">{blog.title}</h1>
         <p className="max-w-3xl text-lg leading-7 text-slate-600">{blog.excerpt}</p>

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { auth } from "@/auth";
+import { BlogOwnerActions } from "@/components/blog/blog-owner-actions";
 import { EmptyState } from "@/components/ui/empty-state";
 import { canReachDatabase } from "@/lib/db-health";
 import { formatDate } from "@/lib/utils";
@@ -72,9 +72,7 @@ export default async function ProfilePage() {
                     <td className="px-4 py-3">{blog.status}</td>
                     <td className="px-4 py-3">{formatDate(blog.updatedAt)}</td>
                     <td className="px-4 py-3">
-                      <Link href={`/blog/edit/${blog.id}`} className="text-brand-600 hover:text-brand-700">
-                        Edit
-                      </Link>
+                      <BlogOwnerActions blogId={blog.id} editHref={`/blog/edit/${blog.id}`} />
                     </td>
                   </tr>
                 ))}

@@ -4,8 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import type { BlogStatus } from "@prisma/client";
 import type { JSONContent } from "@tiptap/core";
-import type React from "react";
-import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { TiptapEditor } from "@/components/blog/tiptap-editor";
@@ -50,7 +48,6 @@ const defaultContent: JSONContent = {
 
 export function BlogForm({ mode, authorName, categories, initialData }: BlogFormProps) {
   const router = useRouter();
-  const [uploading, setUploading] = useState(false);
 
   const form = useForm<BlogFormValues>({
     resolver: zodResolver(blogSchema),
@@ -75,85 +72,6 @@ export function BlogForm({ mode, authorName, categories, initialData }: BlogForm
     }
   });
 
-  const mediaPreview = useMemo(() => form.watch("media") || [], [form]);
-
-  async function uploadFile(file: File) {
-    const signatureRes = await fetch("/api/upload/signature", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ folder: "nexablog/blogs" })
-    });
-
-    if (!signatureRes.ok) {
-      const payload = await signatureRes.json().catch(() => null);
-      throw new Error(payload?.error || "Unable to get upload signature");
-    }
-
-    const signatureData = await signatureRes.json();
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("api_key", signatureData.apiKey);
-    formData.append("timestamp", String(signatureData.timestamp));
-    formData.append("signature", signatureData.signature);
-    formData.append("folder", signatureData.folder);
-
-    const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`, {
-      method: "POST",
-      body: formData
-    });
-
-    if (!uploadRes.ok) {
-      const payload = await uploadRes.json().catch(() => null);
-      throw new Error(payload?.error?.message || payload?.error || "Upload failed");
-    }
-
-    const uploaded = await uploadRes.json();
-
-    return {
-      secureUrl: uploaded.secure_url,
-      publicId: uploaded.public_id,
-      resource: uploaded.resource_type,
-      format: uploaded.format || undefined,
-      bytes: uploaded.bytes || undefined,
-      width: uploaded.width || undefined,
-      height: uploaded.height || undefined
-    };
-  }
-
-  async function handleCoverUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setUploading(true);
-      const uploaded = await uploadFile(file);
-      form.setValue("coverImage", uploaded.secureUrl, { shouldValidate: true });
-      toast.success("Cover image uploaded");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to upload cover image");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function handleMediaUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = event.target.files;
-    if (!files?.length) return;
-
-    try {
-      setUploading(true);
-      const uploads = await Promise.all(Array.from(files).map(uploadFile));
-      const existing = form.getValues("media") || [];
-      form.setValue("media", [...existing, ...uploads], { shouldValidate: true });
-      toast.success("Media files uploaded");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to upload media files");
-    } finally {
-      setUploading(false);
-    }
-  }
-
   async function onSubmit(values: BlogFormValues) {
     try {
       const endpoint = mode === "create" ? "/api/blogs" : `/api/blogs/${initialData?.id}`;
@@ -173,7 +91,8 @@ export function BlogForm({ mode, authorName, categories, initialData }: BlogForm
 
       const payload = await response.json();
       toast.success(mode === "create" ? "Blog created" : "Blog updated");
-      router.push(`/blog/${payload.data.slug}`);
+      const savedBlog = payload.data as { id: string; slug: string; status: BlogStatus };
+      router.push(savedBlog.status === "DRAFT" ? `/blog/edit/${savedBlog.id}` : `/blog/${savedBlog.slug}`);
       router.refresh();
     } catch {
       toast.error("Unexpected error while saving blog");
@@ -226,7 +145,6 @@ export function BlogForm({ mode, authorName, categories, initialData }: BlogForm
           <label className="text-sm font-medium text-slate-700">Cover Image URL</label>
           <Input placeholder="https://..." {...form.register("coverImage")} />
           <p className="text-xs text-red-600">{form.formState.errors.coverImage?.message}</p>
-          <Input type="file" accept="image/*" onChange={handleCoverUpload} />
         </div>
 
         <div className="space-y-2">
@@ -235,19 +153,6 @@ export function BlogForm({ mode, authorName, categories, initialData }: BlogForm
           <p className="text-xs text-red-600">{form.formState.errors.videoUrl?.message}</p>
         </div>
 
-        <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium text-slate-700">Additional Media</label>
-          <Input type="file" accept="image/*,video/*" multiple onChange={handleMediaUpload} />
-          {mediaPreview.length ? (
-            <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {mediaPreview.map((media, index) => (
-                <p key={media.publicId ?? `media-${index}`} className="truncate rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
-                  {media.secureUrl}
-                </p>
-              ))}
-            </div>
-          ) : null}
-        </div>
       </div>
 
       <div className="space-y-2">
@@ -263,7 +168,7 @@ export function BlogForm({ mode, authorName, categories, initialData }: BlogForm
         <Button type="button" variant="secondary" onClick={() => router.back()}>
           Cancel
         </Button>
-        <Button type="submit" loading={form.formState.isSubmitting || uploading}>
+        <Button type="submit" loading={form.formState.isSubmitting}>
           {mode === "create" ? "Create blog" : "Save changes"}
         </Button>
       </div>
