@@ -84,7 +84,10 @@ export function BlogForm({ mode, authorName, categories, initialData }: BlogForm
       body: JSON.stringify({ folder: "nexablog/blogs" })
     });
 
-    if (!signatureRes.ok) throw new Error("Unable to get upload signature");
+    if (!signatureRes.ok) {
+      const payload = await signatureRes.json().catch(() => null);
+      throw new Error(payload?.error || "Unable to get upload signature");
+    }
 
     const signatureData = await signatureRes.json();
 
@@ -101,7 +104,8 @@ export function BlogForm({ mode, authorName, categories, initialData }: BlogForm
     });
 
     if (!uploadRes.ok) {
-      throw new Error("Upload failed");
+      const payload = await uploadRes.json().catch(() => null);
+      throw new Error(payload?.error?.message || payload?.error || "Upload failed");
     }
 
     const uploaded = await uploadRes.json();
@@ -126,8 +130,8 @@ export function BlogForm({ mode, authorName, categories, initialData }: BlogForm
       const uploaded = await uploadFile(file);
       form.setValue("coverImage", uploaded.secureUrl, { shouldValidate: true });
       toast.success("Cover image uploaded");
-    } catch {
-      toast.error("Unable to upload cover image");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to upload cover image");
     } finally {
       setUploading(false);
     }
@@ -143,8 +147,8 @@ export function BlogForm({ mode, authorName, categories, initialData }: BlogForm
       const existing = form.getValues("media") || [];
       form.setValue("media", [...existing, ...uploads], { shouldValidate: true });
       toast.success("Media files uploaded");
-    } catch {
-      toast.error("Unable to upload media files");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to upload media files");
     } finally {
       setUploading(false);
     }

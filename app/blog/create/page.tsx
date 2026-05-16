@@ -29,7 +29,23 @@ export default async function CreateBlogPage() {
     );
   }
 
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  let categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+
+  // Self-heal fresh deployments where seed has not run yet.
+  if (categories.length === 0) {
+    await prisma.category.createMany({
+      data: [
+        { name: "Engineering", slug: "engineering", description: "Engineering updates and tutorials" },
+        { name: "Product", slug: "product", description: "Product launches and roadmap notes" },
+        { name: "Design", slug: "design", description: "Design insights and UI exploration" },
+        { name: "Marketing", slug: "marketing", description: "Marketing strategy and growth stories" },
+        { name: "Leadership", slug: "leadership", description: "Leadership lessons and team culture" }
+      ],
+      skipDuplicates: true
+    });
+
+    categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  }
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">

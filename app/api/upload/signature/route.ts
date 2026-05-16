@@ -33,6 +33,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("CLOUDINARY_SIGNATURE_ERROR", error);
-    return NextResponse.json({ error: "Unable to generate upload signature" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unable to generate upload signature";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
