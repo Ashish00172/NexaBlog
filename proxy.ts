@@ -1,12 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { hasRequiredRole, roles } from "@/lib/permissions";
 
-export async function proxy(req: NextRequest) {
-  const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
-  const token = await getToken({ req, secret: authSecret });
-  const isLoggedIn = Boolean(token);
-  const role = typeof token?.role === "string" ? token.role : undefined;
+export const proxy = auth((req) => {
+  const isLoggedIn = Boolean(req.auth?.user);
+  const role = typeof req.auth?.user?.role === "string" ? req.auth.user.role : undefined;
   const pathname = req.nextUrl.pathname;
 
   if (!isLoggedIn) {
@@ -22,7 +20,7 @@ export async function proxy(req: NextRequest) {
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ["/admin/:path*", "/profile/:path*", "/blog/create", "/blog/edit/:path*"]

@@ -40,6 +40,7 @@ export default async function HomePage({ searchParams }: Props) {
   const category = params.category?.trim();
   const sort = params.sort === "oldest" ? "oldest" : "latest";
   const page = parsePage(params.page || null, 1);
+  const hasFilters = Boolean(q || category || sort === "oldest" || page > 1);
 
   const [result, categories] = await Promise.all([
     getPublishedBlogs({ q, category, sort, page, limit: 9 }),
@@ -84,7 +85,16 @@ export default async function HomePage({ searchParams }: Props) {
       {result.blogs.length ? (
         <BlogList blogs={result.blogs} />
       ) : (
-        <EmptyState title="No blogs found" description="Try a different keyword or category filter." />
+        <EmptyState
+          title={hasFilters ? "No blogs found" : "No published blogs yet"}
+          description={
+            hasFilters
+              ? "Try a different keyword or category filter."
+              : "Only published blogs appear here. Create a post and publish it to show on the home page."
+          }
+          ctaHref={hasFilters ? undefined : "/blog/create"}
+          ctaLabel={hasFilters ? undefined : "Create Blog"}
+        />
       )}
 
       <div className="flex items-center justify-between">
