@@ -31,8 +31,8 @@ export async function canReachDatabase() {
         to_regclass('public."Blog"')::text AS blog_table,
         to_regclass('public."Category"')::text AS category_table
     `;
-    const hasBlog = tableCheck[0]?.blog_table === 'public."Blog"';
-    const hasCategory = tableCheck[0]?.category_table === 'public."Category"';
+    const hasBlog = Boolean(tableCheck[0]?.blog_table);
+    const hasCategory = Boolean(tableCheck[0]?.category_table);
     if (!hasBlog || !hasCategory) {
       console.error("DB_SCHEMA_MISSING", { hasBlog, hasCategory });
       globalCache.dbHealthCache = { checkedAt: now, healthy: false };
