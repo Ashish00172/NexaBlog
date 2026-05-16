@@ -1,4 +1,0 @@
-INVALID_REGISTER_RAW:{"error":"Unable to register user"} HTTP_STATUS:500
-SEARCH_SHORT_COUNT:0
-SEARCH_WELCOME_COUNT:1
-SEARCH_FIRST_TITLE:Welcome to Our Enterprise Blog Platform
